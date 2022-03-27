@@ -1,138 +1,141 @@
-#!/bin/bash
+#!/bin/sh
 
-usage() {
-  cat << EOS >&2
+usage()
+{
+	cat << EOS >&2
 gh graph
-  GitHub contribution graph in your terminal.
+     GitHub contribution graph in your terminal.
 
 USAGE:
-  gh graph [options] [user]
+     gh graph [options] [user]
 
 ARGS:
-  user  GitHub user name.
-        If this is blank, the current user (login by 'gh auth login') will be used.
+     user  GitHub user name.  If this is blank, the current user (login
+           by 'gh auth login') will be used.
 
 OPTIONS:
-  -i, --invert          Change the background colors instead of the foreground colors.
-      --no-total        Remove the total contributions count.
-      --no-legend       Remove the legend.
-  -s, --scheme <name>   Use the specific color scheme.
-                        The default is 'github'.
-  -p, --pixel <char>    Use the character as pixels (URL encoding is required).
-                        The default is '■' (encoded to '%E2%96%A0').
-  -h, --help            Show this help message.
+     -i, --invert          Change the background colors instead of the
+                           foreground colors.
+         --no-total        Remove the total contributions count.
+         --no-legend       Remove the legend.
+     -s, --scheme <name>   Use the specific color scheme.  The default
+                           is 'github'.
+     -p, --pixel <char>    Use the character as pixels (URL encoding is
+                           required).  The default is '■' (encoded to
+                           '%E2%96%A0').
+     -h, --help            Show this help message.
 
 AUTHOR:
-  kawarimidoll (https://github.com/kawarimidoll)
+     kawarimidoll (https://github.com/kawarimidoll)
 EOS
 }
 
-invalid() {
-  usage
-  echo
-  echo "$@" 1>&2
-  exit 1
+invalid()
+{
+	usage
+	echo
+	echo "$@" 1>&2
+	exit 1
 }
 
-while (( $# > 0 ))
-do
-  case $1 in
-    -h | --help)
-      usage
-      exit 0
-      ;;
-    --no-total)
-      if [[ -n "$NO_TOTAL" ]]; then
-        invalid "Duplicated 'no-total' option."
-        exit 1
-      fi
-      NO_TOTAL=1
-      shift
-      ;;
-    --no-legend)
-      if [[ -n "$NO_LEGEND" ]]; then
-        invalid "Duplicated 'no-legend' option."
-        exit 1
-      fi
-      NO_LEGEND=1
-      shift
-      ;;
-    -i | --invert)
-      if [[ -n "$INVERT" ]]; then
-        invalid "Duplicated 'invert' option."
-        exit 1
-      fi
-      INVERT=1
-      shift
-      ;;
-    -s | --scheme | --scheme=*)
-      if [[ -n "$SCHEME" ]]; then
-        invalid "Duplicated 'scheme' option."
-        exit 1
-      elif [[ "$1" =~ ^--scheme= ]]; then
-        SCHEME=$(echo $1 | sed -e 's/^--scheme=//')
-        shift
-      elif [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
-        invalid "'scheme' option requires an argument."
-        exit 1
-      else
-        SCHEME="$2"
-        shift 2
-      fi
-      ;;
-    -p | --pixel | --pixel=*)
-      if [[ -n "$PIXEL" ]]; then
-        invalid "Duplicated 'pixel' option."
-        exit 1
-      elif [[ "$1" =~ ^--pixel= ]]; then
-        PIXEL=$(echo $1 | sed -e 's/^--pixel=//')
-        shift
-      elif [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
-        invalid "'pixel' option requires an argument."
-        exit 1
-      else
-        PIXEL="$2"
-        shift 2
-      fi
-      ;;
-    -*)
-      invalid "Illegal option -- '$(echo $1 | sed 's/^-*//')'."
-      exit 1
-      ;;
-    *)
-      if [[ -n "$GH_USER" ]]; then
-        invalid "Too many arguments."
-        exit 1
-      fi
-      GH_USER="$1"
-      shift
-      ;;
-  esac
+while [ $# -gt 0 ]; do
+	case $1 in
+	-h | --help)
+		usage
+		exit 0
+		;;
+	--no-total)
+		if [ -n "$NO_TOTAL" ]; then
+			invalid "Duplicated 'no-total' option."
+			exit 1
+		fi
+		NO_TOTAL=1
+		shift
+		;;
+	--no-legend)
+		if [ -n "$NO_LEGEND" ]; then
+			invalid "Duplicated 'no-legend' option."
+			exit 1
+		fi
+		NO_LEGEND=1
+		shift
+		;;
+	-i | --invert)
+		if [ -n "$INVERT" ]; then
+			invalid "Duplicated 'invert' option."
+			exit 1
+		fi
+		INVERT=1
+		shift
+		;;
+	-s | --scheme | --scheme=*)
+		if [ -n "$SCHEME" ]; then
+			invalid "Duplicated 'scheme' option."
+			exit 1
+		elif expr -- "$1" : '^--scheme=' >/dev/null; then
+			SCHEME=$(echo $1 | sed -e 's/^--scheme=//')
+			shift
+		elif [ -z "$2" ] || expr -- "$2" : '^--*' >/dev/null; then
+			invalid "'scheme' option requires an argument."
+			exit 1
+		else
+			SCHEME="$2"
+			shift 2
+		fi
+		;;
+	-p | --pixel | --pixel=*)
+		if [ -n "$PIXEL" ]; then
+			invalid "Duplicated 'pixel' option."
+			exit 1
+		elif expr -- "$1" : '^--pixel=' >/dev/null; then
+			PIXEL=$(echo $1 | sed -e 's/^--pixel=//')
+			shift
+		elif [ -z "$2" ] || expr -- "$2" : '^--*' >/dev/null; then
+			invalid "'pixel' option requires an argument."
+			exit 1
+		else
+			PIXEL="$2"
+			shift 2
+		fi
+		;;
+	-*)
+		invalid "Illegal option -- '$(echo $1 | sed 's/^-*//')'."
+		exit 1
+		;;
+	*)
+		if [ -n "$GH_USER" ]; then
+			invalid "Too many arguments."
+			exit 1
+		fi
+		GH_USER="$1"
+		shift
+		;;
+	esac
 done
 
 OPTS="?gh-graph=true"
-if [[ -n "$NO_TOTAL" ]]; then
-  OPTS="$OPTS&no-total=true"
+if [ -n "$NO_TOTAL" ]; then
+	OPTS="$OPTS&no-total=true"
 fi
-if [[ -n "$NO_LEGEND" ]]; then
-  OPTS="$OPTS&no-legend=true"
+if [ -n "$NO_LEGEND" ]; then
+	OPTS="$OPTS&no-legend=true"
 fi
-if [[ -n "$INVERT" ]]; then
-  OPTS="$OPTS&invert=true"
+if [ -n "$INVERT" ]; then
+	OPTS="$OPTS&invert=true"
 fi
-if [[ -n "$SCHEME" ]]; then
-  OPTS="$OPTS&scheme=$SCHEME"
+if [ -n "$SCHEME" ]; then
+	OPTS="$OPTS&scheme=$SCHEME"
 fi
-if [[ -n "$PIXEL" ]]; then
-  OPTS="$OPTS&pixel=$PIXEL"
+if [ -n "$PIXEL" ]; then
+	OPTS="$OPTS&pixel=$PIXEL"
 fi
 
-if [[ -z "$GH_USER" ]]; then
-  GH_USER=$(gh api user --jq .login)
-  if [[ $? -ne 0 ]]; then
-    echo "${GH_USER}"
-    exit 1
-  fi
+if [ -z "$GH_USER" ]; then
+	GH_USER=$(gh api user --jq .login)
+	if [ $? -ne 0 ]; then
+		echo "${GH_USER}"
+		exit 1
+	fi
 fi
 
 curl "https://github-contributions-api.deno.dev/${GH_USER}.term${OPTS}"
